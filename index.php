@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html>
 <body>
@@ -14,32 +13,70 @@ $menus = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
 <form method="post" action="<?php echo $_SERVER['PHP_SELF'];?>">
-  Numero: <input type="text" name="numero">
+  Numero: <input type="text" name="number">
  
-        <select>
+        <select name='menu'>
             
         <option value="0">Select Menu:</option>
         <?php
         for($i = 0; $i < count($menus); $i++){
             $repas = $menus[$i]['name'];
-            $id = $menus[$i]['id'];
-        echo "<option value='$id'>$repas</option>";
+            $id_menu = $menus[$i]['id'];
+            
+        echo "<option value=$id_menu >$repas</option>";
         }
         ?>
-      
-
-        </select>
-        
+        </select>        
   <input type="submit">
 </form>
+<?php
 
+//POST DES COMMANDES
+if ($_SERVER["REQUEST_METHOD"] == "POST"){
+    $request = true; 
+    if($request){ 
+    $number = strip_tags($_POST['number']);
+    $menu = ceil($_POST['menu']);
+
+    
+    //RECUPERER LE CLIENT A PARTIR DE SON number
+    $db = getConnexion();
+    $sql_client = "SELECT id FROM `api_restaurant`.`client` WHERE `number` = '$number' ";
+    $id_client = $db->prepare($sql_client);
+    $id_client ->execute();
+    $client = $id_client->fetch();
+   
+    $sql_commande = "INSERT INTO `commande` (`commande_id`, `client_id`, `menu_id`) VALUES (NULL, '$client[0]', '$menu')";
+
+    //on prepare la requete
+    $query = $db->prepare($sql_commande);
+    //on injecte la requete
+    // $query->bindValue(":number", $number);
+    // $query->bindValue(":menu", $menu);
+
+    $query->execute();
+    if (!$query->execute()){
+        die('Une erreur est survenue');
+    }
+    $id_commande = $db->lastInsertId();
+    die("Commande ajouté sous le numero $id_commande");
+    }
+
+    else {
+        die("le formulaire est imcomplet");
+    }
+}
+
+
+
+?>
 
 
 
 <?php
 require_once('./api.php');
 //www.resto.com/commandes
-//www.resto.com/commande/: clients
+//www.resto.com/commandes/: clients
 //www.resto.com/commande/:id
 // $servername = "localhost";
 // $username = "api_restaurant";
